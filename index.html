@@ -66,6 +66,7 @@ select:focus { outline: none; border-color: #444; }
     <option value="team 1:1">Team 1:1</option>
     <option value="negotiation">Negotiation</option>
     <option value="general conversation">General conversation</option>
+    <option value="vendor pitch">Vendor pitch</option>
   </select>
   <button class="record-btn" id="recBtn" onclick="toggleRecording()">
     <span class="dot" id="dot"></span>
@@ -154,7 +155,10 @@ async function fetchQuestions(){
   document.getElementById('questions').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><span>Generating questions...</span></div>';
   setStatus('Analyzing...');
   const ctx=getCtx();
-  const prompt=`You are a real-time call coach. Below is a live transcript from a ${ctx} call.\n\nSuggest 5 sharp, high-value questions the listener should ask RIGHT NOW.\n\nRules:\n- Questions must be grounded in what was actually said\n- Prioritize uncovering needs, motivations, blockers, or next steps\n- Each question must be distinct\n- Keep each question under 20 words\n- Output ONLY a JSON array of 5 strings, no markdown, no preamble\n\nTranscript:\n"""\n${transcript.slice(-3000)}\n"""`;
+  const isVendor=ctx==='vendor pitch';
+  const prompt=isVendor
+    ?`You are a Strategic Vendor Analyst Co-Pilot acting as a critical friend during a live vendor sales pitch. Analyze this transcript through three lenses: (1) Reality Check — verify claims, client references, "unique" or "first-to-market" features; (2) Black Box Drill-Down — peel back buzzwords like "AI-driven", "seamless", "infinite scale" to expose the How, including data provenance, compliance (SOC2/HIPAA/GDPR), and interoperability; (3) Day 2 Specialist — uncover implementation friction, TCO, switching costs, and Time to Value the vendor is omitting.\n\nReturn a JSON array of up to 5 objects, each with keys: "flag" (the specific claim or buzzword, max 6 words), "context" (why it is a risk or gap, max 15 words), "question" (the exact phrase to say, under 25 words).\n\nOutput ONLY a valid JSON array, no markdown, no preamble.\n\nTranscript:\n"""\n${transcript.slice(-3000)}\n"""`
+    :`You are a real-time call coach. Below is a live transcript from a ${ctx} call.\n\nSuggest 5 sharp, high-value questions the listener should ask RIGHT NOW.\n\nRules:\n- Questions must be grounded in what was actually said\n- Prioritize uncovering needs, motivations, blockers, or next steps\n- Each question must be distinct\n- Keep each question under 20 words\n- Output ONLY a JSON array of 5 strings, no markdown, no preamble\n\nTranscript:\n"""\n${transcript.slice(-3000)}\n"""`;
   try{
     const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:'Return only valid JSON. No explanation, no markdown fences.',messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
@@ -174,7 +178,17 @@ async function fetchQuestions(){
 }
 function renderQuestions(qs,ctx){
   if(!Array.isArray(qs)||!qs.length){document.getElementById('questions').innerHTML='<p class="q-placeholder">No questions returned. Try refreshing.</p>';return;}
-  document.getElementById('questions').innerHTML='<div class="ctx-tag">'+esc(ctx)+'</div>'+qs.map((q,i)=>`<div class="q-card" onclick="copyQ(this,'${q.replace(/'/g,"\\'")}')"><div class="q-num">Q${i+1}</div><div>${esc(q)}</div></div>`).join('');
+  const isVendor=ctx==='vendor pitch';
+  document.getElementById('questions').innerHTML='<div class="ctx-tag">'+esc(ctx)+'</div>'+qs.map((q,i)=>{
+    if(isVendor){
+      return `<div class="q-card" onclick="copyQ(this,'${(q.question||'').replace(/'/g,"\\'")}')">
+        <div class="q-num" style="color:#b45309">FLAG: ${esc(q.flag||'')}</div>
+        <div style="font-size:11px;color:#555;margin:3px 0 6px">${esc(q.context||'')}</div>
+        <div>${esc(q.question||'')}</div>
+      </div>`;
+    }
+    return `<div class="q-card" onclick="copyQ(this,'${q.replace(/'/g,"\\'")}')"><div class="q-num">Q${i+1}</div><div>${esc(q)}</div></div>`;
+  }).join('');
 }
 function copyQ(el,text){navigator.clipboard?.writeText(text).catch(()=>{});el.classList.add('copied');setTimeout(()=>el.classList.remove('copied'),900);}
 function setStatus(msg){document.getElementById('statusBar').textContent=msg;}
