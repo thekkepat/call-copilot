@@ -5,302 +5,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Call Co-pilot</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0f0f10;
-    --bg2: #1a1a1d;
-    --bg3: #222226;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.14);
-    --text: #e8e8ea;
-    --text2: #8a8a94;
-    --text3: #55555f;
-    --accent: #6c6ff5;
-    --accent-dim: rgba(108,111,245,0.15);
-    --danger: #e05a5a;
-    --danger-dim: rgba(224,90,90,0.12);
-    --success: #4caf82;
-    --radius: 10px;
-    --radius-sm: 6px;
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    font-size: 14px;
-  }
-
-  /* TOP BAR */
-  .topbar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 18px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg2);
-    flex-shrink: 0;
-  }
-
-  .logo {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.01em;
-    margin-right: 4px;
-  }
-  .logo span { color: var(--accent); }
-
-  .ctx-label { font-size: 12px; color: var(--text2); }
-
-  select {
-    height: 32px;
-    padding: 0 10px;
-    font-size: 13px;
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    cursor: pointer;
-    flex: 1;
-    max-width: 240px;
-  }
-  select:focus { outline: none; border-color: var(--accent); }
-
-  .spacer { flex: 1; }
-
-  .rec-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 34px;
-    padding: 0 16px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border2);
-    background: var(--bg3);
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .rec-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .rec-btn.active {
-    background: var(--danger-dim);
-    border-color: var(--danger);
-    color: var(--danger);
-  }
-
-  .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: currentColor;
-    flex-shrink: 0;
-  }
-  .dot.pulse { animation: pulse 1.2s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
-
-  /* PANELS */
-  .panels {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
-
-  .panel {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .panel-left {
-    flex: 1.15;
-    border-right: 1px solid var(--border);
-  }
-  .panel-right { flex: 0.85; }
-
-  .panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 9px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  .panel-title {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--text3);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .auto-label {
-    font-size: 11px;
-    color: var(--text3);
-  }
-
-  .refresh-btn {
-    height: 26px;
-    padding: 0 12px;
-    font-size: 12px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border2);
-    background: transparent;
-    color: var(--text2);
-    cursor: pointer;
-    transition: all 0.12s;
-  }
-  .refresh-btn:hover:not(:disabled) {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .refresh-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-  /* TRANSCRIPT */
-  .transcript-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    font-size: 13.5px;
-    line-height: 1.8;
-    color: var(--text);
-  }
-  .transcript-body::-webkit-scrollbar { width: 4px; }
-  .transcript-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-  .interim { color: var(--text3); font-style: italic; }
-  .placeholder { color: var(--text3); font-style: italic; }
-
-  .word-count {
-    padding: 6px 16px;
-    font-size: 11px;
-    color: var(--text3);
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  /* QUESTIONS */
-  .questions-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .questions-body::-webkit-scrollbar { width: 4px; }
-  .questions-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-  .q-placeholder {
-    color: var(--text3);
-    font-size: 13px;
-    font-style: italic;
-    padding: 8px 4px;
-    line-height: 1.6;
-  }
-
-  .ctx-tag {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 3px 9px;
-    border-radius: 99px;
-    background: var(--accent-dim);
-    color: var(--accent);
-    margin-bottom: 4px;
-  }
-
-  .q-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 11px 13px;
-    font-size: 13px;
-    line-height: 1.55;
-    color: var(--text);
-    cursor: pointer;
-    transition: border-color 0.12s, background 0.12s;
-    animation: fadeUp 0.25s ease both;
-  }
-  .q-card:hover { border-color: var(--accent); background: var(--bg3); }
-  .q-card.copied { border-color: var(--success) !important; }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: none; }
-  }
-
-  .q-num {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--text3);
-    letter-spacing: 0.04em;
-    margin-bottom: 4px;
-  }
-
-  .spinner-wrap {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 4px;
-    color: var(--text2);
-    font-size: 13px;
-  }
-  .spinner {
-    width: 14px; height: 14px;
-    border: 1.5px solid var(--border2);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .status-bar {
-    padding: 6px 16px;
-    font-size: 11px;
-    color: var(--text3);
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-    min-height: 26px;
-  }
-
-  /* COPY TOAST */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(8px);
-    background: var(--bg3);
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-sm);
-    padding: 8px 16px;
-    font-size: 12px;
-    color: var(--text2);
-    opacity: 0;
-    transition: all 0.2s;
-    pointer-events: none;
-    white-space: nowrap;
-  }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f0f0f; color: #e8e8e8; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #222; background: #0f0f0f; flex-shrink: 0; }
+.logo { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; color: #888; white-space: nowrap; }
+.logo span { color: #e8e8e8; }
+.spacer { flex: 1; }
+.ctx-label { font-size: 12px; color: #555; white-space: nowrap; }
+select { height: 32px; font-size: 13px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; color: #e8e8e8; padding: 0 10px; min-width: 200px; }
+select:focus { outline: none; border-color: #444; }
+.record-btn { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 16px; border-radius: 6px; border: 1px solid #2a2a2a; background: transparent; color: #e8e8e8; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background 0.15s, border-color 0.15s; }
+.record-btn:hover { background: #1a1a1a; }
+.record-btn.active { background: rgba(220,38,38,0.1); border-color: rgba(220,38,38,0.4); color: #f87171; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: #555; flex-shrink: 0; }
+.dot.live { background: #ef4444; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.25; } }
+.panels { display: flex; flex: 1; overflow: hidden; }
+.panel { display: flex; flex-direction: column; overflow: hidden; }
+.panel-left { flex: 1.1; border-right: 1px solid #1e1e1e; }
+.panel-right { flex: 0.9; }
+.panel-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #1a1a1a; flex-shrink: 0; }
+.panel-title { font-size: 10px; font-weight: 600; color: #444; letter-spacing: 0.08em; text-transform: uppercase; }
+.refresh-btn { height: 26px; padding: 0 12px; font-size: 12px; border-radius: 5px; border: 1px solid #2a2a2a; background: transparent; color: #666; cursor: pointer; transition: background 0.12s, color 0.12s; }
+.refresh-btn:hover:not(:disabled) { background: #1a1a1a; color: #aaa; }
+.refresh-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.auto-hint { font-size: 11px; color: #333; }
+.transcript-body { flex: 1; overflow-y: auto; padding: 16px; font-size: 14px; line-height: 1.8; color: #c8c8c8; }
+.transcript-body::-webkit-scrollbar { width: 4px; }
+.transcript-body::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+.interim { color: #444; font-style: italic; }
+.placeholder { color: #333; font-style: italic; }
+.word-count { font-size: 11px; color: #333; padding: 6px 16px; border-top: 1px solid #1a1a1a; flex-shrink: 0; }
+.questions-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.questions-body::-webkit-scrollbar { width: 4px; }
+.questions-body::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+.q-card { background: #161616; border-radius: 7px; padding: 10px 13px; font-size: 13.5px; line-height: 1.55; color: #d0d0d0; border: 1px solid #222; cursor: pointer; transition: background 0.1s, border-color 0.1s; animation: fadeUp 0.25s ease; }
+.q-card:hover { background: #1c1c1c; border-color: #333; }
+.q-card.copied { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.05); }
+@keyframes fadeUp { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+.q-num { font-size: 10px; font-weight: 600; color: #333; letter-spacing: 0.05em; margin-bottom: 4px; text-transform: uppercase; }
+.q-placeholder { color: #333; font-size: 13px; font-style: italic; padding: 16px; line-height: 1.7; }
+.spinner-wrap { display: flex; align-items: center; gap: 10px; padding: 16px; color: #444; font-size: 13px; }
+.spinner { width: 14px; height: 14px; border: 1.5px solid #2a2a2a; border-top-color: #555; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.status-bar { padding: 6px 16px; font-size: 11px; color: #333; border-top: 1px solid #1a1a1a; flex-shrink: 0; min-height: 26px; }
+.ctx-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; margin-bottom: 6px; background: #1e1e1e; color: #555; letter-spacing: 0.04em; text-transform: uppercase; }
 </style>
 </head>
 <body>
-
 <div class="topbar">
-  <div class="logo">call<span>·</span>copilot</div>
+  <div class="logo">call·<span>copilot</span></div>
+  <div class="spacer"></div>
   <span class="ctx-label">Call type</span>
   <select id="ctx">
     <option value="client discovery">Client discovery</option>
@@ -312,26 +67,22 @@
     <option value="negotiation">Negotiation</option>
     <option value="general conversation">General conversation</option>
   </select>
-  <div class="spacer"></div>
-  <button class="rec-btn" id="recBtn" onclick="toggleRecording()">
+  <button class="record-btn" id="recBtn" onclick="toggleRecording()">
     <span class="dot" id="dot"></span>
     <span id="recLabel">Start listening</span>
   </button>
 </div>
-
 <div class="panels">
-
   <div class="panel panel-left">
     <div class="panel-header">
       <span class="panel-title">Live transcript</span>
-      <span class="auto-label" id="autoLabel"></span>
+      <span class="auto-hint" id="autoHint"></span>
     </div>
     <div class="transcript-body" id="transcript">
       <span class="placeholder">Start listening to begin transcribing your call...</span>
     </div>
     <div class="word-count" id="wordCount"></div>
   </div>
-
   <div class="panel panel-right">
     <div class="panel-header">
       <span class="panel-title">Suggested questions</span>
@@ -342,201 +93,92 @@
     </div>
     <div class="status-bar" id="statusBar"></div>
   </div>
-
 </div>
-
-<div class="toast" id="toast">Copied to clipboard</div>
-
 <script>
-let recognition = null;
-let isRecording = false;
-let finalTranscript = '';
-let interimTranscript = '';
-let wordCount = 0;
-let lastRefreshWords = 0;
-let isFetching = false;
-const AUTO_REFRESH_WORDS = 60;
-
-function getCtx() { return document.getElementById('ctx').value; }
-
-function toggleRecording() {
-  isRecording ? stopRecording() : startRecording();
-}
-
-function startRecording() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    setStatus('Speech recognition not supported — use Chrome or Edge.');
-    return;
-  }
-
-  recognition = new SR();
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.lang = 'en-US';
-
-  recognition.onresult = (e) => {
-    interimTranscript = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) finalTranscript += e.results[i].transcript + ' ';
-      else interimTranscript = e.results[i].transcript;
+let recognition=null,isRecording=false,finalTranscript='',interimTranscript='',wordCount=0,lastRefreshWords=0,isFetching=false;
+const AUTO_REFRESH_WORDS=60;
+function getCtx(){return document.getElementById('ctx').value;}
+function toggleRecording(){if(!isRecording)startRecording();else stopRecording();}
+function startRecording(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){setStatus('Speech recognition not supported — use Chrome or Edge.');return;}
+  recognition=new SR();recognition.continuous=true;recognition.interimResults=true;recognition.lang='en-US';
+  recognition.onresult=(e)=>{
+    interimTranscript='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i].transcript;
+      if(e.results[i].isFinal)finalTranscript+=t+' ';else interimTranscript=t;
     }
-    renderTranscript();
-    updateWordCount();
-    checkAutoRefresh();
+    renderTranscript();countWords();checkAutoRefresh();
   };
-
-  recognition.onerror = (e) => {
-    if (e.error !== 'no-speech') setStatus('Mic error: ' + e.error);
-  };
-
-  recognition.onend = () => { if (isRecording) recognition.start(); };
-
-  recognition.start();
-  isRecording = true;
+  recognition.onerror=(e)=>{if(e.error!=='no-speech')setStatus('Mic error: '+e.error);};
+  recognition.onend=()=>{if(isRecording)recognition.start();};
+  recognition.start();isRecording=true;
   document.getElementById('recBtn').classList.add('active');
-  document.getElementById('recLabel').textContent = 'Listening...';
-  document.getElementById('dot').classList.add('pulse');
-  document.getElementById('refreshBtn').disabled = true;
+  document.getElementById('recLabel').textContent='Listening...';
+  document.getElementById('dot').classList.add('live');
+  document.getElementById('refreshBtn').disabled=true;
   setStatus('Listening — speak clearly near your mic.');
 }
-
-function stopRecording() {
-  if (recognition) { recognition.onend = null; recognition.stop(); }
-  isRecording = false;
+function stopRecording(){
+  if(recognition){recognition.onend=null;recognition.stop();}
+  isRecording=false;
   document.getElementById('recBtn').classList.remove('active');
-  document.getElementById('recLabel').textContent = 'Start listening';
-  document.getElementById('dot').classList.remove('pulse');
-  document.getElementById('autoLabel').textContent = '';
-  if (finalTranscript.trim()) {
-    document.getElementById('refreshBtn').disabled = false;
-    setStatus('Stopped. Click Refresh to update questions.');
-  } else {
-    setStatus('');
+  document.getElementById('recLabel').textContent='Start listening';
+  document.getElementById('dot').classList.remove('live');
+  document.getElementById('autoHint').textContent='';
+  if(finalTranscript.trim()){document.getElementById('refreshBtn').disabled=false;setStatus('Stopped. Click Refresh to update questions.');}
+  else setStatus('');
+}
+function renderTranscript(){
+  const el=document.getElementById('transcript');
+  el.innerHTML=(finalTranscript?'<span>'+esc(finalTranscript)+'</span>':'')+(interimTranscript?'<span class="interim">'+esc(interimTranscript)+'</span>':'');
+  el.scrollTop=el.scrollHeight;
+}
+function countWords(){
+  const full=finalTranscript+' '+interimTranscript;
+  wordCount=full.trim().split(/\s+/).filter(Boolean).length;
+  document.getElementById('wordCount').textContent=wordCount>0?wordCount+' words':'';
+}
+function checkAutoRefresh(){
+  const since=wordCount-lastRefreshWords;
+  const remaining=AUTO_REFRESH_WORDS-since;
+  if(remaining>0&&since>0)document.getElementById('autoHint').textContent='auto in ~'+remaining+'w';
+  if(since>=AUTO_REFRESH_WORDS&&!isFetching){lastRefreshWords=wordCount;document.getElementById('autoHint').textContent='';fetchQuestions();}
+}
+async function fetchQuestions(){
+  const transcript=finalTranscript.trim();
+  if(!transcript||isFetching)return;
+  isFetching=true;
+  document.getElementById('refreshBtn').disabled=true;
+  document.getElementById('questions').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><span>Generating questions...</span></div>';
+  setStatus('Analyzing...');
+  const ctx=getCtx();
+  const prompt=`You are a real-time call coach. Below is a live transcript from a ${ctx} call.\n\nSuggest 5 sharp, high-value questions the listener should ask RIGHT NOW.\n\nRules:\n- Questions must be grounded in what was actually said\n- Prioritize uncovering needs, motivations, blockers, or next steps\n- Each question must be distinct\n- Keep each question under 20 words\n- Output ONLY a JSON array of 5 strings, no markdown, no preamble\n\nTranscript:\n"""\n${transcript.slice(-3000)}\n"""`;
+  try{
+    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:'Return only valid JSON. No explanation, no markdown fences.',messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const raw=data.content?.find(b=>b.type==='text')?.text||'[]';
+    const clean=raw.replace(/```json|```/g,'').trim();
+    const questions=JSON.parse(clean);
+    renderQuestions(questions,ctx);
+    setStatus('Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+    lastRefreshWords=wordCount;
+  }catch(err){
+    document.getElementById('questions').innerHTML='<p class="q-placeholder">Could not generate questions. Check console for details.</p>';
+    setStatus('Error — see browser console.');
+    console.error('fetchQuestions error:',err);
   }
+  isFetching=false;
+  document.getElementById('refreshBtn').disabled=false;
 }
-
-function renderTranscript() {
-  const el = document.getElementById('transcript');
-  el.innerHTML =
-    (finalTranscript ? '<span>' + esc(finalTranscript) + '</span>' : '') +
-    (interimTranscript ? '<span class="interim">' + esc(interimTranscript) + '</span>' : '');
-  el.scrollTop = el.scrollHeight;
+function renderQuestions(qs,ctx){
+  if(!Array.isArray(qs)||!qs.length){document.getElementById('questions').innerHTML='<p class="q-placeholder">No questions returned. Try refreshing.</p>';return;}
+  document.getElementById('questions').innerHTML='<div class="ctx-tag">'+esc(ctx)+'</div>'+qs.map((q,i)=>`<div class="q-card" onclick="copyQ(this,'${q.replace(/'/g,"\\'")}')"><div class="q-num">Q${i+1}</div><div>${esc(q)}</div></div>`).join('');
 }
-
-function updateWordCount() {
-  const all = (finalTranscript + ' ' + interimTranscript).trim();
-  wordCount = all ? all.split(/\s+/).filter(Boolean).length : 0;
-  document.getElementById('wordCount').textContent = wordCount > 0 ? wordCount + ' words' : '';
-}
-
-function checkAutoRefresh() {
-  const since = wordCount - lastRefreshWords;
-  const remaining = AUTO_REFRESH_WORDS - since;
-  if (remaining > 0) {
-    document.getElementById('autoLabel').textContent = 'auto-refresh in ~' + remaining + ' words';
-  }
-  if (since >= AUTO_REFRESH_WORDS && !isFetching) {
-    lastRefreshWords = wordCount;
-    document.getElementById('autoLabel').textContent = '';
-    fetchQuestions();
-  }
-}
-
-async function fetchQuestions() {
-  const transcript = finalTranscript.trim();
-  if (!transcript || isFetching) return;
-
-  isFetching = true;
-  document.getElementById('refreshBtn').disabled = true;
-  document.getElementById('questions').innerHTML =
-    '<div class="spinner-wrap"><div class="spinner"></div><span>Generating questions...</span></div>';
-  setStatus('Analyzing conversation...');
-
-  const ctx = getCtx();
-  const prompt = `You are a real-time call coach. Below is a live transcript from a "${ctx}" call.
-
-Suggest 5 sharp, high-value questions the listener should ask RIGHT NOW.
-
-Rules:
-- Questions must be directly relevant to what was just discussed
-- Prioritize uncovering needs, motivations, blockers, or next steps
-- Each question must be distinct — no overlap
-- Keep each question under 20 words
-- Output ONLY a valid JSON array of 5 strings. No markdown, no explanation.
-
-Transcript:
-"""
-${transcript.slice(-3000)}
-"""`;
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 600,
-        system: 'Return only valid JSON. No explanation, no markdown fences.',
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    const data = await res.json();
-    const raw = data.content?.find(b => b.type === 'text')?.text || '[]';
-    const questions = JSON.parse(raw.replace(/```json|```/g, '').trim());
-
-    renderQuestions(questions, ctx);
-    setStatus('Updated at ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    document.getElementById('refreshBtn').disabled = false;
-    lastRefreshWords = wordCount;
-  } catch (err) {
-    document.getElementById('questions').innerHTML =
-      '<p class="q-placeholder">Could not generate questions. Try refreshing.</p>';
-    setStatus('Error: ' + (err.message || 'unknown'));
-    document.getElementById('refreshBtn').disabled = false;
-  }
-
-  isFetching = false;
-}
-
-function renderQuestions(qs, ctx) {
-  const el = document.getElementById('questions');
-  if (!Array.isArray(qs) || !qs.length) {
-    el.innerHTML = '<p class="q-placeholder">No questions returned. Try refreshing.</p>';
-    return;
-  }
-  el.innerHTML =
-    '<div class="ctx-tag">' + esc(ctx) + '</div>' +
-    qs.map((q, i) =>
-      `<div class="q-card" style="animation-delay:${i * 0.05}s" onclick="copyQ(this, ${JSON.stringify(q)})">
-        <div class="q-num">Q${i + 1}</div>
-        <div>${esc(q)}</div>
-      </div>`
-    ).join('');
-}
-
-function copyQ(el, text) {
-  navigator.clipboard?.writeText(text).catch(() => {});
-  el.classList.add('copied');
-  setTimeout(() => el.classList.remove('copied'), 1000);
-  showToast('Copied to clipboard');
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-function setStatus(msg) { document.getElementById('statusBar').textContent = msg; }
-
-function esc(s) {
-  return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+function copyQ(el,text){navigator.clipboard?.writeText(text).catch(()=>{});el.classList.add('copied');setTimeout(()=>el.classList.remove('copied'),900);}
+function setStatus(msg){document.getElementById('statusBar').textContent=msg;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 </script>
 </body>
 </html>
